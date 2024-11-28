@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 ExecStart=/usr/local/bin/buttonservice.sh
 Restart=always
-User=femto
+User=root
 
 [Install]
 WantedBy=multi-user.target
