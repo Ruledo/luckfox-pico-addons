@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$reason" = "BOUND" ] || [ "$reason" = "RENEW" ]; then
-    systemctl stop meshtastic.service
+    systemctl stop meshtasticd.service
     sleep 5
-    systemctl start meshtastic.service
+    systemctl start meshtasticd.service
 fi
