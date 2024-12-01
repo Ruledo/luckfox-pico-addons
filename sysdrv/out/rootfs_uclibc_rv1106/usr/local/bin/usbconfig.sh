@@ -80,38 +80,49 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   found_config="false"
   update_wifi="false"
 
- # Escape and read the fields from the USB config file if they exist
-while IFS='=' read -r key value; do
-    value=$(echo "$value" | tr -d '"')
-    case "$key" in
-        wifi_ssid) wifi_ssid=$(escape_sed "$value") ;;
-        wifi_psk) wifi_psk=$(escape_sed "$value") ;;
-        wifi_country) wifi_country=$(escape_sed "$value") ;;
-        lora_radio) lora_radio=$(escape_sed "$value") ;;
-        timezone) timezone=$(escape_sed "$value") ;;
-    esac
-done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|lora_radio|timezone)=' "$usb_config")
+  # Escape and read the fields from the USB config file if they exist
+  while IFS='=' read -r key value; do
+      value=$(echo "$value" | tr -d '"')
+      case "$key" in
+          wifi_ssid) wifi_ssid=$(escape_sed "$value") ;;
+          wifi_psk) wifi_psk=$(escape_sed "$value") ;;
+          wifi_country) wifi_country=$(escape_sed "$value") ;;
+          lora_radio) lora_radio=$(escape_sed "$value") ;;
+          timezone) timezone=$(escape_sed "$value") ;;
+      esac
+  done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|lora_radio|timezone)=' "$usb_config")
 
 
   # Update wpa_supplicant.conf with the new values, if specified
   if [[ -n "$wifi_country" ]]; then
-      sed -i "s/^\(wifi_country=\).*/\1$wifi_country/" "$wpa_supplicant_conf"
-      log_message "Updated wifi country in wpa_supplicant.conf to $wifi_country."
+      # Update or add the country field
+      if grep -q "^country=" "$wpa_supplicant_conf"; then
+          sed -i "s/^country=.*/country=$wifi_country/" "$wpa_supplicant_conf"
+          log_message "Updated Wi-Fi country in wpa_supplicant.conf to $wifi_country."
+      else
+          echo "country=$wifi_country" >> "$wpa_supplicant_conf"
+          log_message "Added Wi-Fi country to wpa_supplicant.conf as $wifi_country."
+      fi
       found_config="true"
       update_wifi="true"
   fi
+
   if [[ -n "$wifi_ssid" ]]; then
-      sed -i "/wifi_ssid=/s/\".*\"/\"$wifi_ssid\"/" "$wpa_supplicant_conf"
-      log_message "Updated wifi SSID in wpa_supplicant.conf to $wifi_ssid."
+      # Update the ssid in the network block
+      sed -i "/ssid=/s/\".*\"/\"$wifi_ssid\"/" "$wpa_supplicant_conf"
+      log_message "Updated Wi-Fi SSID in wpa_supplicant.conf to $wifi_ssid."
       found_config="true"
       update_wifi="true"
   fi
+
   if [[ -n "$wifi_psk" ]]; then
-      sed -i "/wifi_psk=/s/\".*\"/\"$wifi_psk\"/" "$wpa_supplicant_conf"
-      log_message "Updated wifi PSK in wpa_supplicant.conf from femtofox-config.txt."
+      # Update the psk in the network block
+      sed -i "/psk=/s/\".*\"/\"$wifi_psk\"/" "$wpa_supplicant_conf"
+      log_message "Updated Wi-Fi PSK in wpa_supplicant.conf."
       found_config="true"
       update_wifi="true"
   fi
+
 
   #get lora_radio model, if specified, and copy appropriate yaml to /etc/meshtasticd/config.d/
   if [[ -n "$lora_radio" ]]; then
