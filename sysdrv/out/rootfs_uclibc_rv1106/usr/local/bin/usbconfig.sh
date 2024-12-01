@@ -151,6 +151,8 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       'ai-thinker-ra-01sh')
       cp /etc/meshtasticd/available.d/femtofox_Waveshare-SX126X-XXXM_AI-Thinker-RA-01SH.yaml /etc/meshtasticd/config.d
         ;;
+      'none')
+        ;;
       *)
         log_message "Invalid LoRa radio name: $lora_radio, ignoring."
         found_config="false"
